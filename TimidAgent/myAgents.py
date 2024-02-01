@@ -34,4 +34,31 @@ class TimidAgent(Agent):
 
         Fill in appropriate documentation
         """
+        # List of directions the agent can choose from
+        legal = state.getLegalPacmanActions()
+
+        # Get the agent's state from the game state and find agent heading
+        agentState = state.getPacmanState()
+        heading = agentState.getDirection()
+
+        if heading == Directions.STOP:
+            # Pacman is stopped, assume North (true at beginning of game)
+            heading = Directions.NORTH
+
+        # Turn left if possible
+        left = Directions.LEFT[heading]  # What is left based on current heading
+        if left in legal:
+            action = left
+        else:
+            # No left turn
+            if heading in legal:
+                action = heading  # continue in current direction
+            elif Directions.RIGHT[heading] in legal:
+                action = Directions.RIGHT[heading]  # Turn right
+            elif Directions.REVERSE[heading] in legal:
+                action = Directions.REVERSE[heading]  # Turn around
+            else:
+                action = Directions.STOP  # Can't move!
+
+        return action
 
