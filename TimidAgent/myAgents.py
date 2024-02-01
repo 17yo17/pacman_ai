@@ -61,4 +61,3 @@ class TimidAgent(Agent):
                 action = Directions.STOP  # Can't move!
 
         return action
-
