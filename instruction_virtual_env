@@ -1,0 +1,5 @@
+open terminal
+lead anaconda envs folder (cd command)
+conda create --name myenv_name python=*.* anaconda
+
+Add new interpreter in PyCharm
