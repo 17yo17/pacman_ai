@@ -25,7 +25,16 @@ class TimidAgent(Agent):
         """
 
         # Your code
-
+        pac_pos = pacman.getPacmanPosition()
+        ghosts_pos= ghost.getGhostPositions()
+        pac_row, pac_col = pac_pos
+        for ghost_pos in ghosts_pos:
+            ghost_row, ghost_col = ghost_pos
+            if not ghost.scared():
+                if abs(pac_row - ghost_row) <= dist or abs(pac_col - ghost_col) <= dist:
+                    return ghost.direction()
+        else:
+            return Directions.STOP
 
 
     def getAction(self, state):
@@ -43,7 +52,7 @@ class TimidAgent(Agent):
 
         if heading == Directions.STOP:
             # Pacman is stopped, assume North (true at beginning of game)
-            heading = Directions.NORTH
+            heading = self.inDanger(agentState, state.getGhostState(1))
 
         # Turn left if possible
         left = Directions.LEFT[heading]  # What is left based on current heading
