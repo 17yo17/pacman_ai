@@ -32,18 +32,23 @@ class TimidAgent(Agent):
         pac_col, pac_row = pac_pos
         ghost_col, ghost_row = ghost_pos
 
+        #If the ghost is scared, pacman will keep going in the same direction
         if ghost.scaredTimer > 0:
             return pacman.getDirection()
         else:
+            #pacman and ghost are in the same row, return a compass direction
             if pac_row == ghost_row:
                 return ghost.getDirection()
+            #pacman and ghost are in the same column, return a compass direction
             if pac_col == ghost_col:
                 return ghost.getDirection()
+            #distance of pacman and ghost <= 3, return a compass direction
             if abs(pac_row - ghost_row) <= dist:
                 return ghost.getDirection()
+            # distance of pacman and ghost <= 3, return a compass direction
             if abs(pac_col - ghost_col) <= dist:
                 return ghost.getDirection()
-
+        #pacman is not in danger
         return Directions.STOP
 
 
@@ -61,12 +66,14 @@ class TimidAgent(Agent):
         ghostStates = state.getGhostStates()
         heading = pacmanState.getDirection()
 
+        # Check if pacman is in danger by checking each ghost
         for ghostState in ghostStates:
             heading = self.inDanger(pacmanState, ghostState)
+            # If pacman is in danger, exit the loop
             if heading != Directions.STOP:
                 break
 
-
+        # If pacman is not in danger, act like the LeftTurnAgent
         if heading == Directions.STOP:
             # Pacman is stopped, assume North (true at beginning of game)
             heading = Directions.NORTH
