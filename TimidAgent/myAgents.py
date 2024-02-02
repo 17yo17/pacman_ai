@@ -24,17 +24,27 @@ class TimidAgent(Agent):
         If the pacman is in danger we return the direction to the ghost.
         """
 
-        # Your code
-        pac_pos = pacman.getPacmanPosition()
-        ghosts_pos= ghost.getGhostPositions()
-        pac_row, pac_col = pac_pos
-        for ghost_pos in ghosts_pos:
-            ghost_row, ghost_col = ghost_pos
-            if not ghost.scared():
-                if abs(pac_row - ghost_row) <= dist or abs(pac_col - ghost_col) <= dist:
-                    return ghost.direction()
+        #Get the positions of the pacman and the ghost
+        pac_pos = pacman.getPosition()
+        ghost_pos = ghost.getPosition()
+
+        #Get the row and column of the pacman and the ghost
+        pac_col, pac_row = pac_pos
+        ghost_col, ghost_row = ghost_pos
+
+        if ghost.scaredTimer > 0:
+            return pacman.getDirection()
         else:
-            return Directions.STOP
+            if pac_row == ghost_row:
+                return ghost.getDirection()
+            if pac_col == ghost_col:
+                return ghost.getDirection()
+            if abs(pac_row - ghost_row) <= dist:
+                return ghost.getDirection()
+            if abs(pac_col - ghost_col) <= dist:
+                return ghost.getDirection()
+
+        return Directions.STOP
 
 
     def getAction(self, state):
@@ -47,12 +57,19 @@ class TimidAgent(Agent):
         legal = state.getLegalPacmanActions()
 
         # Get the agent's state from the game state and find agent heading
-        agentState = state.getPacmanState()
-        heading = agentState.getDirection()
+        pacmanState = state.getPacmanState()
+        ghostStates = state.getGhostStates()
+        heading = pacmanState.getDirection()
+
+        for ghostState in ghostStates:
+            heading = self.inDanger(pacmanState, ghostState)
+            if heading != Directions.STOP:
+                break
+
 
         if heading == Directions.STOP:
             # Pacman is stopped, assume North (true at beginning of game)
-            heading = self.inDanger(agentState, state.getGhostState(1))
+            heading = Directions.NORTH
 
         # Turn left if possible
         left = Directions.LEFT[heading]  # What is left based on current heading
