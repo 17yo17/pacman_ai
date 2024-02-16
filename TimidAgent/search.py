@@ -1,3 +1,4 @@
+# Ryo Taono
 # search.py
 # ---------
 # Licensing Information:  You are free to use or extend these projects for
@@ -16,6 +17,7 @@
 In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
+
 
 import util
 
@@ -67,6 +69,10 @@ def tinyMazeSearch(problem):
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
     sequence of moves will be incorrect, so only use this for tinyMaze.
     """
+    print("Start:", problem.getStartState())
+    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    print(problem._visitedlist)
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
@@ -92,18 +98,63 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-
+    action_list = []
+    visited_list = []
+    frontier = []
     start = problem.getStartState()
+    visited_list.append(start)
+    frontier.extend(problem.getSuccessors(start))
+    while frontier:
+        # Get current state from the stack (frontier)
+        nextNode = frontier.pop()
+        next_position = nextNode[0]
+        # Found the path to goal state
+        if problem.isGoalState(next_position):
+            return action_list
+        # Check if current state is already visited
+        if next_position in visited_list:
+            continue
+        # append next_position to visited_set
+        visited_list.append(next_position)
+        # append action from current to the next state
+        action_list.append(nextNode[1])
+        # append successors of the current state to frontier
+        frontier.extend(problem.getSuccessors(next_position))
+    return None
     #util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    action_list = []
+    visited_list = []
+    frontier = []
+    start = problem.getStartState()
+    visited_list.append(start)
+    frontier.extend(problem.getSuccessors(start))
+    while frontier:
+        # Get current state from the stack (frontier)
+        nextNode = frontier.pop(0)
+        next_position = nextNode[0]
+        # Found the path to goal state
+        if problem.isGoalState(next_position):
+            return action_list
+        # Check if current state is already visited
+        if next_position in visited_list:
+            continue
+        # append next_position to visited_set
+        visited_list.append(next_position)
+        # append action from current to the next state
+        action_list.append(nextNode[1])
+        # append successors of the current state to frontier
+        frontier.extend(problem.getSuccessors(next_position))
+    return None
+    #util.raiseNotDefined()
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
+
     util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
