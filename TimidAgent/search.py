@@ -1,3 +1,4 @@
+
 # Ryo Taono
 # search.py
 # ---------
@@ -20,6 +21,7 @@ Pacman agents (in searchAgents.py).
 
 
 import util
+import explored
 
 class SearchProblem:
     """
@@ -82,6 +84,83 @@ def genericSearch(problem, g, h):
     state = problem.getStartState()
     goal = problem.goal
 
+# Generic graph search
+def graph_search(problem, g, h):
+    # declare frontier as PriorityQueue and push initial state
+    frontier = util.PriorityQueue()
+    frontier.push(SearchNode(problem.getStartState()), 0)
+    # declare a explored set that keeps track of all the states that are explored
+    explored_set = explored.Explored()
+    # loop until frontier becomes empty
+    while frontier:
+        # node is set to state with the highest priority (lowest in priority queue)
+        # added to the  explored set
+        node = frontier.pop()
+        explored_set.add(node.state)
+        # check if node is the goal
+        if problem.isGoalState(node.state):
+            # trace back from goal state to initial state
+            # the sequence of actions is the reverse order of the trace
+            path_back = []
+            while node:
+                path_back.append(node)
+                node = node.parent
+            return [node.action for node in list(reversed(path_back))[1:]]
+        # get child nodes of the current node
+        for child in node.expand(problem):
+            # check if state of the child is not explored nor in the frontier
+            if not explored_set.exists(child.state) and child.state not in [n[2].state for n in frontier.heap]:
+                frontier.push(child, g(child) + h(child, problem))
+    return None
+
+class DepthFirstSearch:
+    @classmethod
+    def g(cls,node):
+        # DepthFirstSearch doesn't care about cost to the current state
+        return 0
+    @classmethod
+    def h(cls,node, problem):
+        # the highest priority is the deepest node (highest depth * (-1))
+        return -node.depth
+    @classmethod
+    def search(cls,problem):
+        return graph_search(problem, cls.g, cls.h)
+class BreadthFirstSearch:
+    @classmethod
+    def g(cls,node):
+        # the highest priority is the lowest depth
+        return node.depth
+    @classmethod
+    def h(cls,node, problem):
+        # BreadthFirstSearch doesn't care about cost to the goal
+        return 0
+    @classmethod
+    def search(cls, problem):
+        return graph_search(problem, cls.g, cls.h)
+
+class UniformCostSearch:
+    @classmethod
+    def g(cls,node):
+        return 0
+    @classmethod
+    def h(cls,node, problem):
+        return 0
+    @classmethod
+    def search(cls,problem):
+        return graph_search(problem, cls.g, cls.h)
+
+class AStarSearch:
+    @classmethod
+    def g(cls,node):
+        # cost is the depth of the node
+        return node.depth
+    @classmethod
+    def h(cls, node, problem):
+        # nullHeuristic calculates the length of the straight line between the current node and goal
+        return nullHeuristic(node.state, problem)
+    @classmethod
+    def search(cls, problem):
+        return graph_search(problem, cls.g, cls.h)
 
 def depthFirstSearch(problem):
     """
@@ -98,80 +177,79 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    action_list = []
-    visited_list = []
-    frontier = []
-    start = problem.getStartState()
-    visited_list.append(start)
-    frontier.extend(problem.getSuccessors(start))
-    while frontier:
-        # Get current state from the stack (frontier)
-        nextNode = frontier.pop()
-        next_position = nextNode[0]
-        # Found the path to goal state
-        if problem.isGoalState(next_position):
-            return action_list
-        # Check if current state is already visited
-        if next_position in visited_list:
-            continue
-        # append next_position to visited_set
-        visited_list.append(next_position)
-        # append action from current to the next state
-        action_list.append(nextNode[1])
-        # append successors of the current state to frontier
-        frontier.extend(problem.getSuccessors(next_position))
-    return None
-    #util.raiseNotDefined()
+    # search function returns the list of actions from the initial to goal
+    return DepthFirstSearch.search(problem)
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    action_list = []
-    visited_list = []
-    frontier = []
-    start = problem.getStartState()
-    visited_list.append(start)
-    frontier.extend(problem.getSuccessors(start))
-    while frontier:
-        # Get current state from the stack (frontier)
-        nextNode = frontier.pop(0)
-        next_position = nextNode[0]
-        # Found the path to goal state
-        if problem.isGoalState(next_position):
-            return action_list
-        # Check if current state is already visited
-        if next_position in visited_list:
-            continue
-        # append next_position to visited_set
-        visited_list.append(next_position)
-        # append action from current to the next state
-        action_list.append(nextNode[1])
-        # append successors of the current state to frontier
-        frontier.extend(problem.getSuccessors(next_position))
-    return None
-    #util.raiseNotDefined()
+    # search function returns the list of actions from the initial to goal
+    return BreadthFirstSearch.search(problem)
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-
-    util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
-    return 0
+    # calculate the length of the line between the current node and goal
+    goal = problem.goal
+    dx = goal[0] - state[0]
+    dy = goal[1] - state[1]
+    cost = dx * dx + dy * dy
+    return cost ** (1/2)
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    # search function returns the list of actions from the initial to goal
+    return AStarSearch.search(problem)
 
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
 astar = aStarSearch
 ucs = uniformCostSearch
+
+
+class SearchNode:
+    """A node in a search tree. Contains a pointer to the parent (the node
+    that this is a successor of) and to the actual state for this node. Note
+    that if a state is arrived at by two paths, then there are two nodes with
+    the same state. Also includes the action that got us to this state, and
+    the total path_cost (also known as g) to reach the node. Other functions
+    may add an f and h value; see best_first_graph_search and astar_search for
+    an explanation of how the f and h values are handled. You will not need to
+    subclass this class."""
+
+    def __init__(self, state, parent=None, action=None):
+        """Create a search tree Node, derived from a parent by an action."""
+        self.state = state
+        self.parent = parent
+        self.action = action
+        self.depth = 0
+        if parent:
+            self.depth = parent.depth + 1
+
+    def __repr__(self):
+        return "<Node {}>".format(self.state)
+
+    def __lt__(self, node):
+        return self.state < node.state
+
+    def expand(self, problem):
+        """List the nodes reachable in one step from this node."""
+        # get successors of the current node
+        child_nodes = problem.getSuccessors(self.state)
+        # return list of SearchNode child nodes
+        return [self.child_node(child_node)
+                for child_node in child_nodes]
+    def child_node(self, child_node):
+        """[Figure 3.10]"""
+        # create SearchNode next node
+        child_state, action, _ = child_node
+        next_node = SearchNode(child_state, self, action)
+        return next_node

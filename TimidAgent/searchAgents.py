@@ -33,6 +33,7 @@ description for details.
 
 Good luck and happy searching!
 """
+import math
 
 from game import Directions
 from game import Agent
@@ -68,37 +69,51 @@ class SearchAgent(Agent):
     Options for fn include:
       depthFirstSearch or dfs
       breadthFirstSearch or bfs
-
+      aStarSearch, requires a heuristic
 
     Note: You should NOT change any code in SearchAgent
     """
 
-    def __init__(self, fn='depthFirstSearch', prob='PositionSearchProblem', heuristic='nullHeuristic'):
-        # Warning: some advanced Python magic is employed below to find the right functions and problems
+    def __init__(self, search_fn='depthFirstSearch', prob='PositionSearchProblem', heuristic='nullHeuristic'):
+        """
+        SearchAgent - An agent that is capable of planning paths to a goal
+        :param search_fn:  Name of function that will be used for search
+        :param prob:  Problem representation instance, can be used to access state, goals, etc.
+        :param heuristic:  Heuristic function
+        """
 
+        # Warning: some advanced Python magic is employed below to find the right functions and problems
         # Get the search function from the name and heuristic
-        if fn not in dir(search):
-            raise AttributeError(fn + ' is not a search function in search.py.')
-        func = getattr(search, fn)
+        if search_fn not in dir(search):
+            raise AttributeError(search_fn + ' is not a search function in search.py.')
+        func = getattr(search, search_fn)
         if 'heuristic' not in func.__code__.co_varnames:
-            print('[SearchAgent] using function ' + fn)
+            # heuristic function name is present in same module as search_fn
+            #print('[SearchAgent] using function ' + search_fn)
             self.searchFunction = func
         else:
+            # See if we can find heuristic elsewhere
             if heuristic in globals().keys():
                 heur = globals()[heuristic]
             elif heuristic in dir(search):
                 heur = getattr(search, heuristic)
             else:
                 raise AttributeError(heuristic + ' is not a function in searchAgents.py or search.py.')
-            print('[SearchAgent] using function %s and heuristic %s' % (fn, heuristic))
-            # Note: this bit of Python trickery combines the search algorithm and the heuristic
+            #print('[SearchAgent] using function %s and heuristic %s' % (search_fn, heuristic))
+            # Create a closure:  binds a function with an environment
+            # In this case, we want to be able to call a function searchFunction with a single argument
+            # and have the heuristic function always follow as a second argument
+            # If you want to know more about closures generally, see:
+            # https://www.cs.rhodes.edu/~kirlinp/rhodes/proglang/s13/360-lect8-slides.pdf
+            # or a more practical guide to closures in Python:
+            # https: // www.codevoila.com / post / 51 / python - tutorial - python - function - and -python - closure
             self.searchFunction = lambda x: func(x, heuristic=heur)
 
         # Get the search problem type from the name
         if prob not in globals().keys() or not prob.endswith('Problem'):
             raise AttributeError(prob + ' is not a search problem type in SearchAgents.py.')
         self.searchType = globals()[prob]
-        print('[SearchAgent] using problem type ' + prob)
+        #print('[SearchAgent] using problem type ' + prob)
 
     def registerInitialState(self, state):
         """
@@ -250,17 +265,6 @@ class StayWestSearchAgent(SearchAgent):
         costFn = lambda pos: 2 ** pos[0]
         self.searchType = lambda state: PositionSearchProblem(state, costFn)
 
-def manhattanHeuristic(position, problem, info={}):
-    "The Manhattan distance heuristic for a PositionSearchProblem"
-    xy1 = position
-    xy2 = problem.goal
-    return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
-
-def euclideanHeuristic(position, problem, info={}):
-    "The Euclidean distance heuristic for a PositionSearchProblem"
-    xy1 = position
-    xy2 = problem.goal
-    return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
 
 #####################################################
 # This portion is incomplete.  Time to write code!  #
@@ -331,17 +335,17 @@ class CornersProblem(search.SearchProblem):
 
     def getCostOfActions(self, actions):
         """
-        Returns the cost of a particular sequence of actions.  If those actions
-        include an illegal move, return 999999.  This is implemented for you.
+        Returns the cost of a particular sequence of actions.
+        It is assumed that all actions are legal actions
+        :param actions:  List of actions or None
+        :return:
         """
-        if actions == None: return 999999
-        x,y= self.startingPosition
-        for action in actions:
-            dx, dy = Actions.directionToVector(action)
-            x, y = int(x + dx), int(y + dy)
-            if self.walls[x][y]: return 999999
-        return len(actions)
 
+        if actions is None or len(actions) == 0:
+            cost = math.inf  # Make inaction very expensive
+        else:
+            cost = len(actions)  # Uniform cost per move
+        return cost
 
 def cornersHeuristic(state, problem):
     """
